@@ -1,9 +1,11 @@
 import React from 'react'
+import { useCalendar } from './Calendar'
 
 type MonthProps = { dates: number[] & any; isCurrent?: boolean }
 
 function Month({ dates, isCurrent }: MonthProps) {
-  const isToday = (date: number) => isCurrent && date === new Date().getDate()
+  const { currentDate } = useCalendar()
+  const isToday = (date: number) => isCurrent && date === currentDate.getDate()
 
   return dates.map((date: number, i: number) => (
     <span

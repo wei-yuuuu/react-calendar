@@ -1,7 +1,36 @@
-import React, { useRef, useMemo } from 'react'
-import Month from './Month'
+import React, { useRef, useMemo, createContext, useContext } from 'react'
+import Header from './Header'
+import Table from './Table'
 
-function Calendar() {
+type ContextType = {
+  prevMonth: number[]
+  curMonth: number[]
+  nextMonth: number[]
+  currentDate: Date
+}
+
+const CalendarContext = createContext<ContextType>({
+  prevMonth: [],
+  curMonth: [],
+  nextMonth: [],
+  currentDate: new Date(),
+})
+
+export function useCalendar() {
+  const context = useContext(CalendarContext)
+
+  if (!context) {
+    throw new Error('useCalendar must be used within [Calendar]')
+  }
+
+  return context
+}
+
+type CalendarProps = {
+  children: JSX.Element[] | JSX.Element
+}
+
+function Calendar({ children }: CalendarProps) {
   const currentDate = useRef<Date>(new Date())
   const fullDates = useRef<number[][]>([[], [], []])
 
@@ -18,7 +47,7 @@ function Calendar() {
   )
   date.setDate(date.getDate() - date.getDay())
 
-  const [prevMonth, curMonth, nextMonth] = useMemo(() => {
+  const value = useMemo(() => {
     // previous month
     while (date < firstDate) {
       fullDates.current[0].push(date.getDate())
@@ -35,23 +64,22 @@ function Calendar() {
       date.setDate(date.getDate() + 1)
     }
 
-    return fullDates.current
+    return {
+      prevMonth: fullDates.current[0],
+      curMonth: fullDates.current[1],
+      nextMonth: fullDates.current[2],
+      currentDate: currentDate.current,
+    }
   }, [date, firstDate])
 
   return (
-    <div className="flex items-center flex-col mt-20">
-      <div className="bg-gray-200 w-64 text-center">
-        <button className="w-10 hover:bg-blue-300 duration-100">{'<'}</button>
-        <span>{currentDate.current.toISOString().slice(0, 10)}</span>
-        <button className="w-10 hover:bg-blue-300 duration-100">{'>'}</button>
-      </div>
-      <div className="border w-64 h-64 flex flex-wrap justify-center duration-100">
-        <Month dates={prevMonth} />
-        <Month dates={curMonth} isCurrent={true} />
-        <Month dates={nextMonth} />
-      </div>
-    </div>
+    <CalendarContext.Provider value={value}>
+      <div className="flex items-center flex-col mt-20">{children}</div>
+    </CalendarContext.Provider>
   )
 }
+
+Calendar.Header = Header
+Calendar.Table = Table
 
 export default Calendar
