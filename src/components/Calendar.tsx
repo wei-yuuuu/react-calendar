@@ -1,4 +1,11 @@
-import React, { useRef, useMemo, createContext, useContext } from 'react'
+import React, {
+  useRef,
+  useMemo,
+  createContext,
+  useContext,
+  useCallback,
+  useReducer,
+} from 'react'
 import Header from './Header'
 import Table from './Table'
 
@@ -16,11 +23,31 @@ const CalendarContext = createContext<ContextType>({
   currentDate: new Date(),
 })
 
+type DispatchType = {
+  next: () => void
+  prev: () => void
+}
+
+const DispatchContext = createContext<DispatchType>({
+  next: () => console.error(`next() must be used within [Calendar]`),
+  prev: () => console.error(`prev() must be used within [Calendar]`),
+})
+
 export function useCalendar() {
   const context = useContext(CalendarContext)
 
   if (!context) {
     throw new Error('useCalendar must be used within [Calendar]')
+  }
+
+  return context
+}
+
+export function useDispatch() {
+  const context = useContext(DispatchContext)
+
+  if (!context) {
+    throw new Error('useDispatch must be used within [Calendar]')
   }
 
   return context
@@ -33,6 +60,9 @@ type CalendarProps = {
 function Calendar({ children }: CalendarProps) {
   const currentDate = useRef<Date>(new Date())
   const fullDates = useRef<number[][]>([[], [], []])
+  const rendered = useRef(false)
+
+  const forceUpdate = useReducer((s) => s + 1, 0)[1]
 
   const firstDate = new Date(
     currentDate.current.getFullYear(),
@@ -48,6 +78,15 @@ function Calendar({ children }: CalendarProps) {
   date.setDate(date.getDate() - date.getDay())
 
   const value = useMemo(() => {
+    const latestValue = {
+      prevMonth: fullDates.current[0],
+      curMonth: fullDates.current[1],
+      nextMonth: fullDates.current[2],
+      currentDate: currentDate.current,
+    }
+
+    if (rendered.current) return latestValue
+
     // previous month
     while (date < firstDate) {
       fullDates.current[0].push(date.getDate())
@@ -64,17 +103,33 @@ function Calendar({ children }: CalendarProps) {
       date.setDate(date.getDate() + 1)
     }
 
-    return {
-      prevMonth: fullDates.current[0],
-      curMonth: fullDates.current[1],
-      nextMonth: fullDates.current[2],
-      currentDate: currentDate.current,
-    }
+    rendered.current = true
+
+    return latestValue
   }, [date, firstDate])
+
+  console.log('render', value)
+
+  const action = useCallback(
+    (n) => {
+      fullDates.current = [[], [], []]
+      rendered.current = false
+      currentDate.current.setMonth(currentDate.current.getMonth() + n)
+      forceUpdate()
+    },
+    [forceUpdate]
+  )
+
+  const dispatch = {
+    next: () => action(+1),
+    prev: () => action(-1),
+  }
 
   return (
     <CalendarContext.Provider value={value}>
-      <div className="flex items-center flex-col mt-20">{children}</div>
+      <DispatchContext.Provider value={dispatch}>
+        <div className="flex items-center flex-col mt-20">{children}</div>
+      </DispatchContext.Provider>
     </CalendarContext.Provider>
   )
 }
