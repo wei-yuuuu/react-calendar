@@ -10,9 +10,11 @@ function Month({ dates, isCurrent }: MonthProps) {
   return dates.map((date: number, i: number) => (
     <span
       key={i}
-      className={`m-2 w-5 cursor-pointer hover:bg-blue-100 text-center ${
-        !isCurrent && `text-gray-500`
-      } ${isToday(date) && `bg-red-200`}
+      className={`m-2 w-5 h-6 text-center ${
+        !isCurrent && `text-gray-500 cursor-not-allowed`
+      } ${isToday(date) && `bg-red-200`} ${
+        isCurrent && `cursor-pointer hover:bg-blue-100`
+      }
        `}
     >
       {date}

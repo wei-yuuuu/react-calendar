@@ -108,8 +108,6 @@ function Calendar({ children }: CalendarProps) {
     return latestValue
   }, [date, firstDate])
 
-  console.log('render', value)
-
   const action = useCallback(
     (n) => {
       fullDates.current = [[], [], []]
