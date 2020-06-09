@@ -103,7 +103,6 @@ function Calendar({ children }: CalendarProps) {
 
   const action = useCallback(
     (n) => {
-      // rendered.current = false
       currentDate.current.setMonth(currentDate.current.getMonth() + n)
       forceUpdate()
     },
