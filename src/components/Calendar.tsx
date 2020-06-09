@@ -1,10 +1,10 @@
 import React, {
   useRef,
-  useMemo,
   createContext,
   useContext,
   useCallback,
   useReducer,
+  useEffect,
 } from 'react'
 import Header from './Header'
 import Table from './Table'
@@ -60,7 +60,6 @@ type CalendarProps = {
 function Calendar({ children }: CalendarProps) {
   const currentDate = useRef<Date>(new Date())
   const fullDates = useRef<number[][]>([[], [], []])
-  const rendered = useRef(false)
 
   const forceUpdate = useReducer((s) => s + 1, 0)[1]
 
@@ -77,16 +76,8 @@ function Calendar({ children }: CalendarProps) {
   )
   date.setDate(date.getDate() - date.getDay())
 
-  const value = useMemo(() => {
-    const latestValue = {
-      prevMonth: fullDates.current[0],
-      curMonth: fullDates.current[1],
-      nextMonth: fullDates.current[2],
-      currentDate: currentDate.current,
-    }
-
-    if (rendered.current) return latestValue
-
+  const calFullDates = useCallback(() => {
+    fullDates.current = [[], [], []]
     // previous month
     while (date < firstDate) {
       fullDates.current[0].push(date.getDate())
@@ -102,21 +93,29 @@ function Calendar({ children }: CalendarProps) {
       fullDates.current[2].push(date.getDate())
       date.setDate(date.getDate() + 1)
     }
-
-    rendered.current = true
-
-    return latestValue
   }, [date, firstDate])
+
+  calFullDates()
+
+  useEffect(() => {
+    calFullDates()
+  }, [calFullDates])
 
   const action = useCallback(
     (n) => {
-      fullDates.current = [[], [], []]
-      rendered.current = false
+      // rendered.current = false
       currentDate.current.setMonth(currentDate.current.getMonth() + n)
       forceUpdate()
     },
     [forceUpdate]
   )
+
+  const value = {
+    prevMonth: fullDates.current[0],
+    curMonth: fullDates.current[1],
+    nextMonth: fullDates.current[2],
+    currentDate: currentDate.current,
+  }
 
   const dispatch = {
     next: () => action(+1),
