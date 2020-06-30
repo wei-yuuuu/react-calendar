@@ -26,6 +26,7 @@ jobs:
         run: |
           yarn run build
 
+      # specify homepage in package.json
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
